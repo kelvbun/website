@@ -7,9 +7,7 @@ import Project from '../components/Project.astro';
 import Spotify from '../components/Spotify.astro';
 
 import HomeLayout from '../layouts/HomeLayout.astro';
-import SpotifyLayout from '../layouts/SpotifyLayout.astro';
-
-
+import SidebarLayout from '../layouts/SidebarLayout.astro';
 ---
 
 <!doctype html>
@@ -23,21 +21,30 @@ import SpotifyLayout from '../layouts/SpotifyLayout.astro';
 	</head>
 
 	<body class="bg-black text-white">
-		<div id="container" class="flex flex-row justify-center">
-			<div>
-				
-				<SpotifyLayout>
+		<div id="container" class="flex flex-row justify-between">
+			<div class="border">
+				<SidebarLayout>
 					<Spotify />
-				</SpotifyLayout>
+					<Spotify />
+					<Spotify />
+				</SidebarLayout>
 			</div>
 		
 		
-			<div class="flex flex-col justify-center items-center">
+			<div>
 				<HomeLayout>
 					<Header />
 					<Tag />
 					<About />
 				</HomeLayout>
+			</div>
+
+			<div class="border">
+				<SidebarLayout>
+					<Spotify />
+					<Spotify />
+					<Spotify />
+				</SidebarLayout>
 			</div>
 		</div>
 	</body>
