@@ -2,9 +2,9 @@
     import { ref } from 'vue';
 
     const tags = ref([
-        {tag: 'lazy'},
-        {tag: 'music addict'},
-        {tag: 'sleepy'}
+        {tag: 'lazy bum'},
+        {tag: 'spotify addict'},
+        {tag: 'broke asf'}
     ]);
 </script>
 
