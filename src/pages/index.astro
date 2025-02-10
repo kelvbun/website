@@ -19,15 +19,33 @@ import HomeLayout from '../layouts/HomeLayout.astro';
 	</head>
 
 	<body class="bg-black text-white">
-		<div id="container">
-			<div>
-				<HomeLayout>
-					<Header />
-					<Tag />
-					<About />
-				</HomeLayout>
+		<div class="relative h-screen w-full overflow-hidden bg-black">
+			<div id="container">
+				<div>
+					<HomeLayout>
+						<Header />
+						<Tag />
+						<About />
+						<Project />
+					</HomeLayout>
+				</div>
 			</div>
-		</div>
+			<div class="absolute inset-0 animate-moveGrid grid-background"></div>
+		  </div>
 	</body>
 </html>
+
+<style>
+	.grid-background {
+	  background: linear-gradient(rgba(0, 255, 170, 0.2) 1px, transparent 1px),
+				  linear-gradient(90deg, rgba(0, 255, 170, 0.2) 1px, transparent 1px);
+	  background-size: 40px 40px;
+	  animation: gridMove 4s linear infinite;
+	}
+	
+	@keyframes gridMove {
+	  from { background-position: 0 0; }
+	  to { background-position: 40px 40px; }
+	}
+</style>
 
