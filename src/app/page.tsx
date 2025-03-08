@@ -1,4 +1,4 @@
-import { FaGithub, FaTwitter } from 'react-icons/fa';
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -17,11 +17,12 @@ export default function Home() {
         {/* Main Content */}
         <div className="flex p-8 bg-gray-50">
           {/* Character Image */}
-          <div className="w-48 h-48 bg-neutral-900 mr-8">
-            <img 
+          <div className="w-48 h-48 bg-neutral-900 mr-8 relative">
+            <Image 
               src="/pfp.png" 
               alt="profile picture"
-              className="w-full h-full object-cover"
+              layout="fill"
+              className="object-cover"
             />
           </div>
 
@@ -33,7 +34,7 @@ export default function Home() {
               <span className="text-gray-400">@ nyc</span>
             </p>
             <p className="text-sm text-gray-600">
-              college student, <br />
+              college student,<br />
               learning to code &<br />
               exploring new tech.<br />
             </p>
