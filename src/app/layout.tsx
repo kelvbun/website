@@ -1,15 +1,9 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "kelvin.social",
-  description: "kelvin's personal website",
-  icons: {
-    icon: "/favicon.ico",
-  },
+  title: 'kelvin.social',
+  description: '',
 };
 
 export default function RootLayout({
@@ -18,8 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
+    <html lang='en'>
+      <body>
         {children}
       </body>
     </html>

@@ -1,51 +1,44 @@
-import Image from 'next/image';
+import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-neutral-900 flex items-center justify-center p-4">
-      <div className="w-[600px] bg-white rounded shadow-lg overflow-hidden">
-        {/* URL Bar */}
-        <div className="bg-gray-100 p-2 text-right text-sm text-gray-500">
-          kelvin.social
-        </div>
+    <div id='container' className='h-full flex flex-col justify-center items-center mt-15 mp-15'>
 
-        {/* Navigation */}
-        <div className="flex">
-          <button className="bg-neutral-900 text-white px-6 py-2">home</button>
-        </div>
+      {/* about me */}
+      <div id='about-me' className='w-2/5 flex flex-col mb-10'>
 
-        {/* Main Content */}
-        <div className="flex p-8 bg-gray-50">
-          {/* Character Image */}
-          <div className="w-48 h-48 bg-neutral-900 mr-8 relative">
-            <Image 
-              src="/pfp.png" 
-              alt="profile picture"
-              layout="fill"
-              className="object-cover"
-            />
-          </div>
+        <div className='mt-8'>
+          <h1 className='text-2xl'>kelvin</h1>
 
-          {/* Character Info */}
-          <div className="flex-1">
-            <h1 className="text-3xl mb-4 font-mono tracking-tight">kelvin</h1>
-            <p className="text-sm text-gray-600 mb-4">
-              spotify addict<br />
-              <span className="text-gray-400">@ nyc</span>
-            </p>
-            <p className="text-sm text-gray-600">
-              college student,<br />
-              learning to code &<br />
-              exploring new tech.<br />
-            </p>
+          <div id='socials' className='flex items-center justify-between'>
+            <h3>@ nyc</h3>
+            <ul className='flex space-x-4'>
+              <li>social 1</li>
+              <li>social 2</li>
+            </ul>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 flex items-center">
-          <span className="text-sm text-gray-600">made with &lt;3</span>
-        </div>
       </div>
+
+      {/* hobbies */}
+      <div id='hobbies' className='w-2/5 flex flex-col'>
+        <img className='rounded-lg' src='https://images.unsplash.com/photo-1583425583779-27e82172cf05?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' alt='' />
+
+        <div className='rounded-xl border-2 bg-[rgb(70, 77, 81)] mt-2'>
+          <h1 className='text-2xl'>hobbies</h1>
+
+          <div className='flex items-center justify-between pb-4'>
+            <h3>some shit</h3>
+            <button className='border-1 rounded-full p-1 pl-4 pr-4'>click me</button>
+          </div>
+
+          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Vero molestiae laborum nobis officiis, quia inventore aut obcaecati iure voluptate at quas dolores eaque optio, corporis rem quam nam, repellendus omnis.</p>
+        </div>
+
+      </div>
+      <div>1</div>
+
     </div>
   );
 }
