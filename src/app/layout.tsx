@@ -2,8 +2,26 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'kelvin.social',
-  description: '',
+  title: 'Home | kelvin.social',
+  description: 'a boy who is passionate about programming',
+  openGraph: {
+    title: 'Home | kelvin.social',
+    url: 'https://kelvin.social',
+    images: {
+      url: 'https://images.unsplash.com/photo-1583425583779-27e82172cf05?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      width: 200,
+      height:200
+    }
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Home | kelvin.social',
+    description: 'a boy who is passionate about programming',
+    site: 'https://kelvin.social', 
+    creator: '@kelvnzh',
+    images: ['https://images.unsplash.com/photo-1583425583779-27e82172cf05?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'],
+  },
+  
 };
 
 export default function RootLayout({
@@ -13,17 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en'>
-      <head>
-      <meta property="og:title" content='kelvin.social' />
-      <meta property="og:description" content="kelvin's personal website" />
-      <meta property="og:url" content='https://kelvin.social' />
-      <meta property="og:image" content='https://images.unsplash.com/photo-1583425583779-27e82172cf05?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' />
-      <meta property="og:image:width" content="200" />
-      <meta property="og:image:height" content="200" />
-
-      <meta name="twitter:card" content="summary" />
-    </head>
-
+      <head></head>
       <body>
         {children}
       </body>
