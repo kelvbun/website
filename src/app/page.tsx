@@ -13,8 +13,8 @@ export default function Home() {
 
           <div id='socials' className='flex items-center justify-start mt-2'>
             <ul className='flex space-x-4'>
-              <li>social 1</li>
-              <li>social 2</li>
+              <li><button>social 1</button></li>
+              <li><button>social 2</button></li>
             </ul>
           </div>
         </div>
@@ -28,7 +28,7 @@ export default function Home() {
 
           <div className='flex items-center justify-between pb-4'>
             <h3>Here are some hobbies I enjoy.</h3>
-            <button className='transition delay-100 duration-300 ease-in-out hover:scale-104 border-2 rounded-full p-1 pl-4 pr-4'>click me</button>
+            <button>click me</button>
           </div>
 
           <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Vero molestiae laborum nobis officiis, quia inventore aut obcaecati iure voluptate at quas dolores eaque optio, corporis rem quam nam, repellendus omnis.</p>
