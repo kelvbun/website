@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
 body {
-  background-color: var(--color-zinc-950);
+  background-color: white;
 }
 
-h1, h3, p, ul, button {
-  color: white;
+h1, h3, p, ul, button{
+  color: black;
+}
+
+button {
+  border-color: black;
 }

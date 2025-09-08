@@ -5,13 +5,13 @@ export default function Home() {
     <div id='container' className='h-full flex flex-col justify-center items-center mt-15 mp-15'>
 
       {/* about me */}
-      <div id='about-me' className='w-2/5 flex flex-col mb-10'>
+      <div id='about-me' className='w-2/5 flex'>
 
         <div className='mt-8'>
-          <h1 className='text-2xl'>kelvin</h1>
+          <h1 className='text-5xl'>Hello, I'm kelvin.</h1>
+          <h3 className='mt-2'>An NYC raised, often dumbfounded college student who’s passionate about programming, constantly exploring new tech, and always curious about how things work.</h3>
 
-          <div id='socials' className='flex items-center justify-between'>
-            <h3>@ nyc</h3>
+          <div id='socials' className='flex items-center justify-start mt-2'>
             <ul className='flex space-x-4'>
               <li>social 1</li>
               <li>social 2</li>
@@ -22,23 +22,32 @@ export default function Home() {
       </div>
 
       {/* hobbies */}
-      <div id='hobbies' className='w-2/5 flex flex-col'>
-        <img className='rounded-lg' src='https://images.unsplash.com/photo-1583425583779-27e82172cf05?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' alt='' />
-
-        <div className='rounded-xl border-2 bg-[rgb(70, 77, 81)] mt-2'>
-          <h1 className='text-2xl'>hobbies</h1>
+      <div id='hobbies' className='w-2/5 flex flex-col mt-8'>
+        <div>
+          <h1 className='text-3xl'>hobbies</h1>
 
           <div className='flex items-center justify-between pb-4'>
-            <h3>some shit</h3>
-            <button className='border-1 rounded-full p-1 pl-4 pr-4'>click me</button>
+            <h3>Here are some hobbies I enjoy.</h3>
+            <button className='transition delay-100 duration-300 ease-in-out hover:scale-104 border-2 rounded-full p-1 pl-4 pr-4'>click me</button>
           </div>
 
           <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Vero molestiae laborum nobis officiis, quia inventore aut obcaecati iure voluptate at quas dolores eaque optio, corporis rem quam nam, repellendus omnis.</p>
         </div>
-
       </div>
-      <div>1</div>
 
+      {/* projects */}
+      <div id='projects' className='w-2/5 flex flex-col mt-8'>
+        <div>
+          <h1 className='text-3xl'>projects</h1>
+
+          <div className='flex items-center justify-between pb-4'>
+            <h3>Here are some projects I've done.</h3>
+            <button className='transition delay-100 duration-300 ease-in-out hover:scale-104 border-2 rounded-full p-1 pl-4 pr-4'>click me</button>
+          </div>
+
+          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Vero molestiae laborum nobis officiis, quia inventore aut obcaecati iure voluptate at quas dolores eaque optio, corporis rem quam nam, repellendus omnis.</p>
+        </div>
+      </div>
     </div>
   );
 }
