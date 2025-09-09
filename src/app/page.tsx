@@ -13,8 +13,8 @@ export default function Home() {
 
           <div id='socials' className='flex items-center justify-start mt-2'>
             <ul className='flex space-x-4'>
-              <li><button>social 1</button></li>
-              <li><button>social 2</button></li>
+              <li><button><a className='fa-brands fa-github fa-lg' href=""/></button></li>
+              <li><button><a className='fa-brands fa-spotify fa-lg' href=""/></button></li>
             </ul>
           </div>
         </div>
