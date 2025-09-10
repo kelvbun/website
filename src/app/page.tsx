@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div id='container' className='h-full flex flex-col justify-center items-center mt-15 mp-15'>
+    <div id='container' className='h-full flex flex-col justify-center items-center mt-15'>
 
       {/* about me */}
       <div id='about-me' className='w-full flex pr-4 pl-4 sm:w-2/5 sm:p-0'>
@@ -45,7 +45,7 @@ export default function Home() {
         <div>
           <h1 className='text-3xl'>projects</h1>
 
-          <div className='flex items-center justify-between pb-4'>
+          <div className='flex flex-col items-start justify-start pb-4 lg:flex-row lg:items-center lg:justify-between'>
             <h3>Here are some projects I've done.</h3>
             <button>click me</button>
           </div>

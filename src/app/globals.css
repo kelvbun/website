@@ -3,6 +3,10 @@
 @tailwind components;
 @tailwind utilities;
 
+@theme {
+  --breakpoint-xs: 30rem;
+}
+
 body {
   background-color: white;
 }
