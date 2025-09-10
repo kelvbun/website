@@ -10,9 +10,9 @@ export default function Home() {
 
         <div className='mt-8'>
           <h1 className='text-5xl'>Hello, I'm <span className='text-black bg-gray-50 rounded-lg pl-2 pr-2'>kelvin</span>.</h1>
+          <h3 className='mt-2 pl-2 border-l-2'>NYC raised college student who’s passionate about programming, constantly exploring new tech, and always curious about how things work.</h3>
 
-          <div id='socials' className='flex flex-col items-start space-y-4 bg-gray-50 rounded-lg p-4 mt-4'>
-            <h3 className='mt-2'>NYC raised college student who’s passionate about programming, constantly exploring new tech, and always curious about how things work.</h3>
+          <div id='socials' className='flex items-start space-y-4 bg-gray-50 rounded-lg p-4 mt-4'>
 
             <ul className='flex space-x-4'>
               <li><a href=""/><Github></Github></li>
