@@ -9,6 +9,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import NowPlaying from "./NowPlaying";
 import PandaHead from "./PandaHead";
+import ThemeToggle from "./ThemeToggle";
 
 type Tile = {
   id: string;
@@ -95,10 +96,11 @@ const tiles: Tile[] = [
     body: <p className="text-sm font-medium">Résumé</p>,
   },
   {
-    id: "time",
+    id: "theme",
     place: "desk:col-start-6 desk:row-start-3",
     tone: "stone",
-    body: <p className="text-sm">Local time</p>,
+    flush: true,
+    body: <ThemeToggle />,
   },
 
   // ROW 4
@@ -186,11 +188,11 @@ const tiles: Tile[] = [
 ];
 
 const tones: Record<Tile["tone"], string> = {
-  paper: "bg-white text-neutral-900",
-  ink: "bg-neutral-900 text-neutral-50",
-  stone: "bg-neutral-200 text-neutral-900",
-  line: "border border-neutral-300 bg-transparent text-neutral-900",
-  bare: "bg-transparent text-neutral-900", // no box: the content is the shape
+  paper: "bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-50",
+  ink: "bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-900",
+  stone: "bg-neutral-200 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100",
+  line: "border border-neutral-300 bg-transparent text-neutral-900 dark:border-neutral-700 dark:text-neutral-100",
+  bare: "bg-transparent text-neutral-900 dark:text-neutral-100", // no box: the content is the shape
 };
 
 export default function BentoGrid() {
