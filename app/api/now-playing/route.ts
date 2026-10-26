@@ -1,140 +1,159 @@
 // app/api/now-playing/route.ts
+//
+// Spotify is the source of truth when it is playing: its API reports the real
+// playback position, so the progress bar is genuinely in sync.
+// Last.fm is the fallback (it only knows *what* played, never *where* in the
+// song you are), so in that case no progress bar is shown.
 import { NextResponse } from "next/server";
 
-const API = "https://ws.audioscrobbler.com/2.0/";
 const PLACEHOLDER = "2a96cbd8b46e442fc41c2b86b821562f"; // Last.fm's "no artwork" image
+
+type Result = {
+  name: string;
+  artist: string;
+  album: string;
+  url: string;
+  image: string | null;
+  nowPlaying: boolean;
+  paused: boolean;
+  durationMs: number;
+  elapsedMs: number | null; // only set when it is the real position
+};
+
+// ---------- Spotify ----------
+
+let cached: { token: string; expires: number } | null = null;
+
+async function spotifyToken(): Promise<string | null> {
+  if (cached && cached.expires > Date.now() + 30_000) return cached.token;
+
+  const id = process.env.SPOTIFY_CLIENT_ID;
+  const secret = process.env.SPOTIFY_CLIENT_SECRET;
+  const refresh = process.env.SPOTIFY_REFRESH_TOKEN;
+  if (!id || !secret || !refresh) return null;
+
+  const res = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refresh,
+    }),
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  cached = {
+    token: data.access_token,
+    expires: Date.now() + data.expires_in * 1000,
+  };
+  return cached.token;
+}
+
+type SpotifyItem = {
+  name: string;
+  duration_ms?: number;
+  external_urls?: { spotify?: string };
+  artists?: { name: string }[];
+  album?: { name: string; images?: { url: string }[] };
+  show?: { name: string; publisher?: string };
+  images?: { url: string }[];
+};
+
+async function fromSpotify(): Promise<Result | null> {
+  const token = await spotifyToken();
+  if (!token) return null;
+
+  const res = await fetch(
+    "https://api.spotify.com/v1/me/player/currently-playing?additional_types=track,episode",
+    { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" },
+  );
+  if (res.status === 204 || !res.ok) return null; // 204 = nothing playing
+
+  const d = await res.json();
+  const item: SpotifyItem | null = d?.item ?? null;
+  if (!item) return null;
+
+  return {
+    name: item.name,
+    artist:
+      item.artists?.map((a) => a.name).join(", ") ??
+      item.show?.publisher ??
+      "",
+    album: item.album?.name ?? item.show?.name ?? "",
+    url: item.external_urls?.spotify ?? "",
+    image: (item.album?.images ?? item.images)?.[0]?.url ?? null,
+    nowPlaying: true,
+    paused: !d.is_playing,
+    durationMs: item.duration_ms ?? 0,
+    elapsedMs: typeof d.progress_ms === "number" ? d.progress_ms : null,
+  };
+}
+
+// ---------- Last.fm (fallback) ----------
 
 type LastfmImage = { size: string; "#text": string };
 
-// Track lengths never change, so remember them between requests.
-const durations = new Map<string, number>(); // milliseconds
+async function fromLastfm(): Promise<Result | null> {
+  const key = process.env.LASTFM_API_KEY;
+  const user = process.env.LASTFM_USERNAME;
+  if (!key || !user) return null;
 
-async function lastfm(params: Record<string, string>) {
   const qs = new URLSearchParams({
-    ...params,
-    api_key: process.env.LASTFM_API_KEY!,
+    method: "user.getrecenttracks",
+    user,
+    api_key: key,
     format: "json",
+    limit: "1",
   });
-  const res = await fetch(`${API}?${qs}`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Last.fm responded ${res.status}`);
-  return res.json();
-}
+  const res = await fetch(`https://ws.audioscrobbler.com/2.0/?${qs}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
 
-// Fallback: Apple's free search API knows the length of most songs.
-async function itunesDuration(artist: string, name: string): Promise<number> {
-  try {
-    const qs = new URLSearchParams({
-      term: `${artist} ${name}`,
-      entity: "song",
-      limit: "5",
-    });
-    const res = await fetch(`https://itunes.apple.com/search?${qs}`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return 0;
-    const data = await res.json();
-    const a = artist.toLowerCase();
-    const hit = (data?.results ?? []).find((r: { artistName?: string }) => {
-      const found = (r.artistName ?? "").toLowerCase();
-      return found.includes(a) || a.includes(found);
-    });
-    return Number(hit?.trackTimeMillis) || 0;
-  } catch {
-    return 0;
-  }
-}
+  const data = await res.json();
+  const list = data?.recenttracks?.track;
+  const t = Array.isArray(list) ? list[0] : list;
+  if (!t) return null;
 
-async function getDuration(artist: string, name: string): Promise<number> {
-  const key = `${artist}::${name}`.toLowerCase();
-  const cached = durations.get(key);
-  if (cached !== undefined) return cached;
+  const images: LastfmImage[] = t.image ?? [];
+  const art =
+    images.find((i) => i.size === "extralarge")?.["#text"] ||
+    images.at(-1)?.["#text"] ||
+    "";
 
-  let ms = 0;
-  try {
-    const data = await lastfm({
-      method: "track.getInfo",
-      artist,
-      track: name,
-      autocorrect: "1",
-    });
-    ms = Number(data?.track?.duration) || 0; // 0 = Last.fm doesn't know
-  } catch {
-    // fall through to the fallback
-  }
-
-  if (!ms) ms = await itunesDuration(artist, name);
-
-  durations.set(key, ms);
-  return ms;
+  return {
+    name: t.name,
+    artist: t.artist?.["#text"] ?? "",
+    album: t.album?.["#text"] ?? "",
+    url: t.url,
+    image: art && !art.includes(PLACEHOLDER) ? art : null,
+    nowPlaying: t["@attr"]?.nowplaying === "true",
+    paused: false,
+    durationMs: 0,
+    elapsedMs: null,
+  };
 }
 
 export async function GET() {
-  if (!process.env.LASTFM_API_KEY || !process.env.LASTFM_USERNAME) {
+  const hasSpotify = !!process.env.SPOTIFY_REFRESH_TOKEN;
+  const hasLastfm = !!process.env.LASTFM_API_KEY && !!process.env.LASTFM_USERNAME;
+
+  if (!hasSpotify && !hasLastfm) {
     return NextResponse.json(
-      { error: "Set LASTFM_API_KEY and LASTFM_USERNAME in .env.local" },
+      { error: "Set the Spotify or Last.fm variables in .env.local" },
       { status: 500 },
     );
   }
 
   try {
-    const data = await lastfm({
-      method: "user.getrecenttracks",
-      user: process.env.LASTFM_USERNAME,
-      limit: "2",
-    });
-
-    const list = data?.recenttracks?.track;
-    const tracks = Array.isArray(list) ? list : list ? [list] : [];
-    const t = tracks[0];
-    if (!t) return NextResponse.json({ track: null });
-
-    const artist: string = t.artist?.["#text"] ?? "";
-    const name: string = t.name;
-    const nowPlaying = t["@attr"]?.nowplaying === "true";
-
-    const images: LastfmImage[] = t.image ?? [];
-    const art =
-      images.find((i) => i.size === "extralarge")?.["#text"] ||
-      images.at(-1)?.["#text"] ||
-      "";
-
-    let durationMs = 0;
-    let elapsedMs: number | null = null;
-
-    if (nowPlaying) {
-      const prev = tracks[1];
-      const prevStartSec = Number(prev?.date?.uts) || 0;
-
-      const [current, previous] = await Promise.all([
-        getDuration(artist, name),
-        prev && prevStartSec
-          ? getDuration(prev.artist?.["#text"] ?? "", prev.name)
-          : Promise.resolve(0),
-      ]);
-      durationMs = current;
-
-      // Last.fm doesn't say where in the song you are. Best guess: this track
-      // started when the previous scrobble started plus its length.
-      if (durationMs > 0 && previous > 0) {
-        const elapsed = Date.now() - (prevStartSec * 1000 + previous);
-        if (elapsed >= 0 && elapsed <= durationMs + 5000) {
-          elapsedMs = Math.min(elapsed, durationMs);
-        }
-      }
-    }
-
-    return NextResponse.json({
-      track: {
-        name,
-        artist,
-        album: t.album?.["#text"] ?? "",
-        url: t.url,
-        image: art && !art.includes(PLACEHOLDER) ? art : null,
-        nowPlaying,
-        durationMs,
-        elapsedMs,
-      },
-    });
+    const spotify = await fromSpotify().catch(() => null);
+    const track = spotify ?? (await fromLastfm().catch(() => null));
+    return NextResponse.json({ track });
   } catch {
     return NextResponse.json({ track: null }, { status: 502 });
   }

@@ -10,8 +10,9 @@ type Track = {
   url: string;
   image: string | null;
   nowPlaying: boolean;
+  paused: boolean;
   durationMs: number;
-  elapsedMs: number | null; // null = server couldn't estimate it
+  elapsedMs: number | null; // real playback position, or null if unknown
 };
 
 const fmt = (ms: number) => {
@@ -25,29 +26,25 @@ export default function NowPlaying() {
   const [now, setNow] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
-  // Fallback clock: when this page first saw the current song.
-  const firstSeen = useRef<{ key: string; at: number }>({ key: "", at: 0 });
+  const loadRef = useRef<() => void>(() => {});
+  const lastEndFetch = useRef(0);
 
   useEffect(() => {
     let active = true;
 
     async function load() {
       try {
-        const res = await fetch(`/api/now-playing?t=${Date.now()}`, {
+        const sent = Date.now();
+        const res = await fetch(`/api/now-playing?t=${sent}`, {
           cache: "no-store",
         });
         const data = await res.json();
         if (!active) return;
 
-        const next: Track | null = data.track ?? null;
-        if (next) {
-          const key = `${next.artist}::${next.name}`;
-          if (firstSeen.current.key !== key) {
-            firstSeen.current = { key, at: Date.now() };
-          }
-        }
-        setTrack(next);
-        setReceivedAt(Date.now());
+        // The position was measured mid-request, so anchor to the midpoint.
+        const at = Math.round((sent + Date.now()) / 2);
+        setTrack(data.track ?? null);
+        setReceivedAt(at);
         setNow(Date.now());
       } catch {
         // keep showing the last known track
@@ -56,8 +53,9 @@ export default function NowPlaying() {
       }
     }
 
+    loadRef.current = load;
     load();
-    const id = setInterval(load, 15_000);
+    const id = setInterval(load, 10_000);
 
     // browsers pause timers in background tabs, so refresh when you come back
     const onVisible = () => {
@@ -74,13 +72,31 @@ export default function NowPlaying() {
     };
   }, []);
 
-  // Tick once a second so the progress bar moves between refreshes.
-  const playing = !!track?.nowPlaying;
+  // Between refreshes, move the bar forward locally once a second.
+  // Each refresh re-syncs it to Spotify's real position, so any seek, pause
+  // or skip is corrected. At the end of a song, fetch the next track at once.
+  const ticking =
+    !!track &&
+    track.nowPlaying &&
+    !track.paused &&
+    track.elapsedMs !== null &&
+    track.durationMs > 0;
+
   useEffect(() => {
-    if (!playing) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    if (!ticking || !track || track.elapsedMs === null) return;
+    const base = track.elapsedMs;
+    const duration = track.durationMs;
+
+    const id = setInterval(() => {
+      const t = Date.now();
+      setNow(t);
+      if (base + (t - receivedAt) >= duration && t - lastEndFetch.current > 3000) {
+        lastEndFetch.current = t;
+        loadRef.current();
+      }
+    }, 1000);
     return () => clearInterval(id);
-  }, [playing]);
+  }, [ticking, track, receivedAt]);
 
   if (!loaded) {
     return <div className="h-full w-full animate-pulse bg-neutral-800" />;
@@ -94,14 +110,20 @@ export default function NowPlaying() {
     );
   }
 
-  const showProgress = track.nowPlaying && track.durationMs > 0;
-  const rawElapsed =
-    track.elapsedMs !== null
-      ? track.elapsedMs + (now - receivedAt)
-      : now - firstSeen.current.at;
-  const elapsed = Math.min(Math.max(rawElapsed, 0), track.durationMs);
+  const showProgress = track.durationMs > 0 && track.elapsedMs !== null;
+  const live = track.nowPlaying && !track.paused;
+  const elapsed = showProgress
+    ? Math.min(
+        Math.max((track.elapsedMs ?? 0) + (live ? now - receivedAt : 0), 0),
+        track.durationMs,
+      )
+    : 0;
   const pct = showProgress ? (elapsed / track.durationMs) * 100 : 0;
-  const sinceSeen = Math.max(0, now - firstSeen.current.at);
+  const label = track.paused
+    ? "Paused"
+    : track.nowPlaying
+      ? "Now playing"
+      : "Last played";
 
   return (
     <a
@@ -121,7 +143,7 @@ export default function NowPlaying() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
       <div className="relative flex h-full flex-col justify-between p-4 text-white">
         <p className="w-fit rounded-full bg-black/60 px-3 py-1 text-sm backdrop-blur-md">
-          {track.nowPlaying ? "Now playing" : "Last played"}
+          {label}
         </p>
         <div>
           <p className="line-clamp-2 text-lg font-semibold leading-tight desk:text-xl">
@@ -149,12 +171,6 @@ export default function NowPlaying() {
                 <span>{fmt(track.durationMs)}</span>
               </div>
             </div>
-          )}
-
-          {track.nowPlaying && !showProgress && (
-            <p className="mt-2 text-xs tabular-nums opacity-80">
-              {fmt(sinceSeen)}
-            </p>
           )}
         </div>
       </div>
