@@ -1,0 +1,2 @@
+@import "tailwindcss";
+@custom-variant desk (@media (min-width: 768px) and (min-height: 600px));
