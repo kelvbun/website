@@ -11,6 +11,7 @@ export default function PandaScene() {
 
   useEffect(() => {
     const el = ref.current;
+
     if (!el) return;
 
     let cancelled = false;
@@ -23,6 +24,7 @@ export default function PandaScene() {
       })
       .catch((err) => {
         console.warn("Panda scene failed to load", err);
+
         if (!cancelled) setFailed(true);
       });
 

@@ -8,7 +8,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
-html { color-scheme: light; }
-html.dark { color-scheme: dark; }
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
 
-body { font-family: var(--font-sans), Arial, sans-serif; }
+body {
+  font-family: var(--font-sans), Arial, sans-serif;
+}

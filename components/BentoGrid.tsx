@@ -51,7 +51,8 @@ const tiles: Tile[] = [
   },
   {
     id: "now-playing",
-    place: "col-span-2 row-span-2 desk:col-start-5 desk:col-span-2 desk:row-start-1 desk:row-span-2",
+    place:
+      "col-span-2 row-span-2 desk:col-start-5 desk:col-span-2 desk:row-start-1 desk:row-span-2",
     tone: "ink",
     flush: true,
     body: <NowPlaying />,
@@ -66,7 +67,8 @@ const tiles: Tile[] = [
   },
   {
     id: "about",
-    place: "col-span-2 row-span-2 desk:col-start-2 desk:col-span-3 desk:row-start-2 desk:row-span-2",
+    place:
+      "col-span-2 row-span-2 desk:col-start-2 desk:col-span-3 desk:row-start-2 desk:row-span-2",
     tone: "paper",
     body: (
       <div className="flex h-full flex-col justify-center">
@@ -132,7 +134,8 @@ const tiles: Tile[] = [
   // ROW 5-6
   {
     id: "project-1",
-    place: "col-span-2 row-span-2 desk:col-start-1 desk:col-span-2 desk:row-start-5 desk:row-span-2",
+    place:
+      "col-span-2 row-span-2 desk:col-start-1 desk:col-span-2 desk:row-start-5 desk:row-span-2",
     href: "/projects/three",
     tone: "paper",
     flush: true,
@@ -159,9 +162,7 @@ const tiles: Tile[] = [
     tone: "ink",
     body: (
       <div className="flex h-full items-center justify-center">
-        <p className="text-xl font-semibold [writing-mode:vertical-rl]">
-          Let’s work together
-        </p>
+        <p className="text-xl font-semibold [writing-mode:vertical-rl]">Let’s work together</p>
       </div>
     ),
   },

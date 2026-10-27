@@ -25,7 +25,7 @@ import {
 import * as Three from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 
-export function mountPanda(container: HTMLButtonElement) {
+export function mountPanda(container: HTMLElement) {
   const renderer = new WebGLRenderer({ alpha: true, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.toneMapping = ACESFilmicToneMapping;
@@ -53,22 +53,27 @@ export function mountPanda(container: HTMLButtonElement) {
   scene.add(rim);
 
   const geometry = new SphereGeometry(1, 40, 28);
+
   const headTint = new DataTexture(
     new Uint8Array([255, 250, 233, 255, 255, 255, 255, 255, 255, 255, 255, 255]),
     1,
     3,
   );
+
   headTint.colorSpace = SRGBColorSpace;
   headTint.magFilter = LinearFilter;
   headTint.needsUpdate = true;
+
   const bellyTint = new DataTexture(
     new Uint8Array([244, 215, 170, 255, 255, 249, 233, 255, 255, 255, 255, 255]),
     1,
     3,
   );
+
   bellyTint.colorSpace = SRGBColorSpace;
   bellyTint.magFilter = LinearFilter;
   bellyTint.needsUpdate = true;
+
   const materials = {
     cream: new MeshStandardMaterial({ color: "#ffffff", roughness: 0.32 }),
     head: new MeshStandardMaterial({
@@ -103,6 +108,7 @@ export function mountPanda(container: HTMLButtonElement) {
     grass: new MeshStandardMaterial({ color: "#63896a", roughness: 1 }),
     grassSide: new MeshBasicMaterial({ color: "#a5b973", toneMapped: false }),
   };
+
   function addPart(
     parent: Group | Scene,
     material: keyof typeof materials,
@@ -117,6 +123,7 @@ export function mountPanda(container: HTMLButtonElement) {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     parent.add(mesh);
+
     return mesh;
   }
 
@@ -124,6 +131,7 @@ export function mountPanda(container: HTMLButtonElement) {
   // oxlint-disable-next-line anti-slop/no-shape-in-symbol-names -- Three's geometry constructor.
   const grassOutline = new Three.Shape();
   grassOutline.absellipse(0, 0, 2.02, 1.6, 0, Math.PI * 2, false, 0);
+
   const grassGeometry = new ExtrudeGeometry(grassOutline, {
     bevelEnabled: true,
     bevelSegments: 4,
@@ -132,6 +140,7 @@ export function mountPanda(container: HTMLButtonElement) {
     curveSegments: 48,
     depth: 0.07,
   });
+
   const grass = new Mesh(grassGeometry, [materials.grass, materials.grassSide]);
   grass.rotation.x = -Math.PI / 2 + 0.3;
   grass.position.y = 0.21;
@@ -149,12 +158,14 @@ export function mountPanda(container: HTMLButtonElement) {
   shadowContext.fillRect(0, 0, 128, 128);
   const contactTexture = new CanvasTexture(shadowCanvas);
   const contactGeometry = new PlaneGeometry(3.2, 2.6);
+
   const contactMaterial = new MeshBasicMaterial({
     map: contactTexture,
     transparent: true,
     depthWrite: false,
     toneMapped: false,
   });
+
   const contact = new Mesh(contactGeometry, contactMaterial);
   contact.rotation.copy(grass.rotation);
   contact.position.copy(grass.position);
@@ -162,6 +173,7 @@ export function mountPanda(container: HTMLButtonElement) {
   contact.translateY(-0.35);
   contact.position.x = -0.3;
   scene.add(contact);
+
   const bambooGeometry = new LatheGeometry(
     [
       [0, 0],
@@ -181,6 +193,7 @@ export function mountPanda(container: HTMLButtonElement) {
     ].map(([radius, height]) => new Vector2(radius, height)),
     32,
   );
+
   const bamboo = new Mesh(bambooGeometry, materials.green);
   bamboo.position.set(0.875, 0.2, -0.35);
   bamboo.scale.set(1.32, 1.1, 1.22);
@@ -189,6 +202,7 @@ export function mountPanda(container: HTMLButtonElement) {
   addPart(scene, "green", [1.275, 2.91, -0.35], [0.1, 0.45, 0.045], -0.65);
   addPart(scene, "green", [-0.46, 2.83, -0.35], [0.075, 0.2, 0.04], -0.8);
   addPart(scene, "green", [1.24, 2.61, -0.35], [0.085, 0.33, 0.045], 0.8);
+
   const treeGeometry = new LatheGeometry(
     [
       [0, 0],
@@ -203,26 +217,32 @@ export function mountPanda(container: HTMLButtonElement) {
     ].map(([radius, height]) => new Vector2(radius, height)),
     9,
   );
+
   const treeColors: number[] = [];
   const treePositions = treeGeometry.attributes.position;
   const treeNormals = treeGeometry.attributes.normal;
   const treeBottom = new Three.Color("#8aa663");
   const treeMiddle = new Three.Color("#8eb369");
   const treeTop = new Three.Color("#79a66f");
+
   for (let i = 0; i < treePositions.count; i++) {
     const height = treePositions.getY(i) / 1.96;
+
     const tint =
       height < 0.55
         ? treeBottom.clone().lerp(treeMiddle, height / 0.55)
         : treeMiddle.clone().lerp(treeTop, (height - 0.55) / 0.45);
+
     const front = Math.max(0, treeNormals.getZ(i));
     tint.r *= 0.5 + 0.5 * front;
     tint.g *= 0.78 + 0.22 * front;
     tint.b *= 0.8 + 0.2 * front;
     treeColors.push(tint.r, tint.g, tint.b);
   }
+
   treeGeometry.setAttribute("color", new Three.Float32BufferAttribute(treeColors, 3));
   const trunkGeometry = new RoundedBoxGeometry(1, 1, 1, 3, 0.16);
+
   for (const [x, size] of [
     [-1.55, 0.68],
     [1.6, 0.38],
@@ -237,6 +257,7 @@ export function mountPanda(container: HTMLButtonElement) {
     const tree = new Mesh(treeGeometry, materials.node);
     tree.position.set(x, 0.43 + trunkHeight, -0.4);
     tree.scale.set(size, size, size * 0.8);
+
     if (x < 0) {
       tree.rotation.z = 0.06;
       tree.scale.x += 0.04;
@@ -246,10 +267,12 @@ export function mountPanda(container: HTMLButtonElement) {
       tree.scale.x += 0.08;
       tree.scale.y -= 0.02;
     }
+
     tree.castShadow = true;
     tree.receiveShadow = true;
     scene.add(tree);
   }
+
   addPart(scene, "belly", [-0.5, 0.8, 0.12], [0.72, 0.79, 0.69]);
   addPart(scene, "cream", [-1.04, 0.29, 0.65], [0.17, 0.16, 0.2]);
   const footGeometry = new SphereGeometry(1, 40, 28, 0, Math.PI * 2, 0, 2.25);
@@ -260,6 +283,7 @@ export function mountPanda(container: HTMLButtonElement) {
   foot.castShadow = true;
   foot.receiveShadow = true;
   scene.add(foot);
+
   const armGeometry = new LatheGeometry(
     new Three.SplineCurve(
       [
@@ -275,6 +299,7 @@ export function mountPanda(container: HTMLButtonElement) {
     ).getPoints(32),
     32,
   );
+
   const arm = new Mesh(armGeometry, materials.black);
   arm.position.set(0.3, 1.26, 0.55);
   arm.rotation.z = -Math.PI / 2 + 0.32;
@@ -291,6 +316,7 @@ export function mountPanda(container: HTMLButtonElement) {
   addPart(head, "black", [0.73, 0.61, -0.09], [0.33, 0.36, 0.25], 0.3);
   const headGeometry = geometry.clone();
   const headVertices = headGeometry.attributes.position;
+
   for (let i = 0; i < headVertices.count; i++) {
     const y = headVertices.getY(i);
     headVertices.setXYZ(
@@ -302,9 +328,11 @@ export function mountPanda(container: HTMLButtonElement) {
       headVertices.getZ(i),
     );
   }
+
   headGeometry.computeVertexNormals();
   const cheeks = addPart(head, "head", [0, 0, 0], [1.16, 0.96, 0.78]);
   cheeks.geometry = headGeometry;
+
   // Seat the markings on the curved face so they stay visible during head turns.
   function facePart(
     material: keyof typeof materials,
@@ -321,8 +349,10 @@ export function mountPanda(container: HTMLButtonElement) {
     part.castShadow = false;
     part.rotation.y = x * 0.8;
     part.rotation.x = -y * 0.8;
+
     return part;
   }
+
   for (const side of [-1, 1]) {
     const eyeX = 0.27 + side * 0.4 + (side > 0 ? 0.07 : 0.035);
     const eyeY = 0.04 - (side > 0 ? 0.07 : 0.03);
@@ -336,13 +366,16 @@ export function mountPanda(container: HTMLButtonElement) {
       [0.017, 0.012, 0.008],
     );
     facePart("cheek", 0.23 + side * 0.78, -0.29, 0.17, 0.12, 0.025, side * 0.15);
+
     for (const offset of [-0.05, 0.05]) {
       const freckle = facePart("blush", 0.23 + side * 0.78 + offset, -0.285, 0.029, 0.035, 0.014);
       freckle.position.z += 0.035;
     }
   }
+
   facePart("patch", 0.31, 0.09, 0.062, 0.04, 0.035);
   facePart("pink", 0.32, -0.105, 0.085, 0.085, 0.035);
+
   function updateFrame(width: number, height: number) {
     if (!width || !height) return;
     camera.left = -(2.15 * width) / height;
@@ -360,6 +393,7 @@ export function mountPanda(container: HTMLButtonElement) {
   let targetY = 0;
   const cheerDuration = 900;
   let clickStarted = -Infinity;
+
   function render(time: number) {
     frame = 0;
     const blend = 1 - Math.exp(-8 * Math.min((time - previous) / 1000, 0.05));
@@ -373,33 +407,41 @@ export function mountPanda(container: HTMLButtonElement) {
     head.rotation.z = 0.24 - head.rotation.y * 0.1 + wiggle * 0.07;
     arm.rotation.z = -Math.PI / 2 + 0.32 + wiggle * 0.1;
     renderer.render(scene, camera);
+
     if (
       progress < 1 ||
       Math.abs(head.rotation.x - targetX) + Math.abs(head.rotation.y - targetY) > 0.001
     )
       wake();
   }
+
   function wake() {
     if (!frame && visible && !document.hidden) frame = requestAnimationFrame(render);
   }
+
   function reset() {
     targetX = 0;
     targetY = 0;
+
     if (motion.matches) {
       clickStarted = -Infinity;
       head.position.y = 1.895;
       head.rotation.set(0, 0, 0.24);
       arm.rotation.z = -Math.PI / 2 + 0.32;
     }
+
     wake();
   }
+
   function cheer() {
     if (motion.matches) return;
     const now = performance.now();
+
     if (now - clickStarted < cheerDuration) return;
     clickStarted = now;
     wake();
   }
+
   function follow(event: PointerEvent) {
     if (!visible || motion.matches || event.pointerType === "touch") return;
     const bounds = container.getBoundingClientRect();
@@ -407,18 +449,22 @@ export function mountPanda(container: HTMLButtonElement) {
     targetX = MathUtils.clamp((event.clientY - bounds.top - bounds.height / 2) / 850, -0.18, 0.18);
     wake();
   }
+
   const resize = new ResizeObserver(() => {
     const { width, height } = container.getBoundingClientRect();
     updateFrame(width, height);
   });
+
   const visibility = new IntersectionObserver(([entry]) => {
     visible = Boolean(entry?.isIntersecting);
+
     if (visible) wake();
     else {
       cancelAnimationFrame(frame);
       frame = 0;
     }
   });
+
   resize.observe(container);
   visibility.observe(container);
   window.addEventListener("pointermove", follow, { passive: true });

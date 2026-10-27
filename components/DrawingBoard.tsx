@@ -35,16 +35,20 @@ export default function DrawingBoard() {
 
   const redraw = useCallback(() => {
     const ctx = canvasRef.current?.getContext("2d");
+
     if (!ctx) return;
     ctx.clearRect(0, 0, W, H);
     let any = false;
+
     for (let i = 0; i < W * H; i++) {
       const c = pixels.current[i];
+
       if (!c) continue;
       any = true;
       ctx.fillStyle = COLORS[c - 1];
       ctx.fillRect(i % W, Math.floor(i / W), 1, 1);
     }
+
     setEmpty(!any);
   }, []);
 
@@ -52,10 +56,13 @@ export default function DrawingBoard() {
   const sync = useCallback(async () => {
     try {
       const res = await fetch("/api/board", { cache: "no-store" });
+
       if (!res.ok) throw new Error("bad response");
+      // SAFETY: The same-origin GET handler returns a string `data` field on each successful response.
       const { data } = (await res.json()) as { data: string };
 
       const next = new Uint8Array(W * H);
+
       for (let i = 0; i < W * H; i++) {
         const ch = data[i];
         const v = ch ? parseInt(ch, 36) : 0;
@@ -64,10 +71,12 @@ export default function DrawingBoard() {
 
       // keep my own fresh strokes on top so they don't flicker away
       const now = Date.now();
+
       for (const [idx, r] of recent.current) {
         if (r.until < now) recent.current.delete(idx);
         else next[idx] = r.c;
       }
+
       for (const [idx, c] of pending.current) next[idx] = c;
 
       pixels.current = next;
@@ -83,10 +92,12 @@ export default function DrawingBoard() {
     if (pending.current.size === 0) return;
     const batch = [...pending.current].slice(0, 600);
     const until = Date.now() + 8000;
+
     for (const [idx, c] of batch) {
       pending.current.delete(idx);
       recent.current.set(idx, { c, until });
     }
+
     try {
       await fetch("/api/board", {
         method: "POST",
@@ -100,6 +111,7 @@ export default function DrawingBoard() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+
     if (!canvas) return;
 
     let visible = true;
@@ -108,15 +120,21 @@ export default function DrawingBoard() {
     const poll = setInterval(() => {
       if (visible && !document.hidden) sync();
     }, 5000);
+
     const send = setInterval(flush, 500);
+
     const observer = new IntersectionObserver(([entry]) => {
       visible = Boolean(entry?.isIntersecting);
+
       if (visible) sync();
     });
+
     observer.observe(canvas);
+
     const onVisible = () => {
       if (!document.hidden) sync();
     };
+
     document.addEventListener("visibilitychange", onVisible);
 
     return () => {
@@ -131,10 +149,12 @@ export default function DrawingBoard() {
   const plot = useCallback((x: number, y: number) => {
     const idx = y * W + x;
     const c = colorRef.current;
+
     if (pixels.current[idx] === c) return;
     pixels.current[idx] = c;
 
     const ctx = canvasRef.current?.getContext("2d");
+
     if (ctx) {
       if (c === 0) ctx.clearRect(x, y, 1, 1);
       else {
@@ -142,7 +162,9 @@ export default function DrawingBoard() {
         ctx.fillRect(x, y, 1, 1);
       }
     }
+
     pending.current.set(idx, c);
+
     if (c) setEmpty(false);
   }, []);
 
@@ -154,14 +176,18 @@ export default function DrawingBoard() {
       const sx = x0 < x1 ? 1 : -1;
       const sy = y0 < y1 ? 1 : -1;
       let err = dx + dy;
+
       for (;;) {
         plot(x0, y0);
+
         if (x0 === x1 && y0 === y1) break;
         const e2 = 2 * err;
+
         if (e2 >= dy) {
           err += dy;
           x0 += sx;
         }
+
         if (e2 <= dx) {
           err += dx;
           y0 += sy;
@@ -175,6 +201,7 @@ export default function DrawingBoard() {
     const rect = event.currentTarget.getBoundingClientRect();
     const x = Math.floor(((event.clientX - rect.left) / rect.width) * W);
     const y = Math.floor(((event.clientY - rect.top) / rect.height) * H);
+
     return {
       x: Math.min(Math.max(x, 0), W - 1),
       y: Math.min(Math.max(y, 0), H - 1),

@@ -11,6 +11,7 @@ export default function PandaCover() {
 
   useEffect(() => {
     const el = ref.current;
+
     if (!el) return;
 
     const tile = el.closest("a") ?? el.parentElement; // the whole tile
@@ -27,8 +28,7 @@ export default function PandaCover() {
     import("./PandaModel")
       .then(({ mountPanda }) => {
         if (cancelled) return;
-        const host: HTMLElement = el;
-        cleanup = mountPanda(host as HTMLButtonElement);
+        cleanup = mountPanda(el);
         tile?.addEventListener("pointerenter", cheer);
       })
       .catch((err) => console.warn("Panda scene failed to load", err));
