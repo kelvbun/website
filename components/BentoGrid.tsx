@@ -71,7 +71,9 @@ const tiles: Tile[] = [
     body: (
       <div className="flex h-full flex-col justify-center">
         <p className="max-w-[28ch] text-2xl font-medium leading-snug desk:text-3xl">
-          I build fast, accessible websites and the tools behind them.
+          I play pickleball. <br />
+          I listen to krnb & crnb. <br />
+          I explore new things. <br />
         </p>
       </div>
     ),
