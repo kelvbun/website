@@ -13,6 +13,7 @@ type Track = {
   paused: boolean;
   durationMs: number;
   elapsedMs: number | null; // real playback position, or null if unknown
+  positionAt: number | null;
 };
 
 const fmt = (ms: number) => {
@@ -37,16 +38,14 @@ export default function NowPlaying() {
       try {
         const sent = Date.now();
 
-        const res = await fetch(`/api/now-playing?t=${sent}`, {
-          cache: "no-store",
-        });
+        const res = await fetch("/api/now-playing");
 
         const data = await res.json();
 
         if (!active) return;
 
         // The position was measured mid-request, so anchor to the midpoint.
-        const at = Math.round((sent + Date.now()) / 2);
+        const at = data.track?.positionAt ?? Math.round((sent + Date.now()) / 2);
         setTrack(data.track ?? null);
         setReceivedAt(at);
         setNow(Date.now());
