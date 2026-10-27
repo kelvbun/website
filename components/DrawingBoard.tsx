@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { BOARD_H as H, BOARD_W as W, MAX_COLOR } from "@/lib/board-config";
+import { drainBoardQueue } from "@/lib/board-outbox.js";
 
 // Stored values 1..8 map to these; 0 is blank (the eraser).
 const COLORS = [
@@ -29,6 +30,8 @@ export default function DrawingBoard() {
   const saveFailed = useRef(false);
   const retryAt = useRef(0);
   const retryDelay = useRef(500);
+  const mounted = useRef(false);
+  const flushRef = useRef<() => Promise<void>>(async () => {});
   const drawing = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
   const colorRef = useRef(5);
@@ -65,6 +68,8 @@ export default function DrawingBoard() {
       // SAFETY: The same-origin GET handler returns a string `data` field on each successful response.
       const { data } = (await res.json()) as { data: string };
 
+      if (!mounted.current) return;
+
       const next = new Uint8Array(W * H);
 
       for (let i = 0; i < W * H; i++) {
@@ -95,37 +100,46 @@ export default function DrawingBoard() {
   const flush = useCallback(async () => {
     if (sending.current || Date.now() < retryAt.current || pending.current.size === 0) return;
 
-    const batch = [...pending.current].slice(0, 600);
     sending.current = true;
 
     try {
-      const res = await fetch("/api/board", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ px: batch.flat() }),
-      });
+      await drainBoardQueue(
+        pending.current,
+        async (batch) => {
+          const res = await fetch("/api/board", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ px: batch.flat() }),
+          });
 
-      if (!res.ok) throw new Error("Could not save strokes");
+          if (!res.ok) throw new Error("Could not save strokes");
+        },
+        (batch) => {
+          const until = Date.now() + 8000;
 
-      const until = Date.now() + 8000;
-
-      for (const [idx, c] of batch) {
-        // Keep a newer local edit if the same pixel changed while this batch was in flight.
-        if (pending.current.get(idx) === c) pending.current.delete(idx);
-        recent.current.set(idx, { c, until });
-      }
+          for (const [idx, c] of batch) recent.current.set(idx, { c, until });
+        },
+      );
 
       retryAt.current = 0;
       retryDelay.current = 500;
       saveFailed.current = false;
-      setStatus("live");
+
+      if (mounted.current) setStatus("live");
     } catch {
       retryAt.current = Date.now() + retryDelay.current;
       retryDelay.current = Math.min(retryDelay.current * 2, 8000);
       saveFailed.current = true;
-      setStatus("offline");
+
+      if (mounted.current) setStatus("offline");
     } finally {
       sending.current = false;
+
+      if (pending.current.size > 0) {
+        const delay = Math.max(retryAt.current - Date.now(), 0);
+
+        window.setTimeout(() => void flushRef.current(), delay);
+      }
     }
   }, []);
 
@@ -134,6 +148,8 @@ export default function DrawingBoard() {
 
     if (!canvas) return;
 
+    flushRef.current = flush;
+    mounted.current = true;
     let visible = true;
     sync();
 
@@ -158,6 +174,7 @@ export default function DrawingBoard() {
     document.addEventListener("visibilitychange", onVisible);
 
     return () => {
+      mounted.current = false;
       clearInterval(poll);
       clearInterval(send);
       observer.disconnect();
