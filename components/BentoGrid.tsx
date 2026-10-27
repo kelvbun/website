@@ -131,7 +131,7 @@ const tiles: Tile[] = [
 
   // ROW 5-6
   {
-    id: "project-3",
+    id: "project-1",
     place: "col-span-2 row-span-2 desk:col-start-1 desk:col-span-2 desk:row-start-5 desk:row-span-2",
     href: "/projects/three",
     tone: "paper",
@@ -141,8 +141,8 @@ const tiles: Tile[] = [
         <PandaCover />
         {/* readable caption over the scene */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent p-4 pt-12 text-white">
-          <h3 className="text-xl font-semibold">Project three</h3>
-          <p className="text-sm opacity-80">Short description.</p>
+          <h3 className="text-xl font-semibold">Baobun</h3>
+          <p className="text-sm opacity-80">A discord bot</p>
         </div>
       </div>
     ),
