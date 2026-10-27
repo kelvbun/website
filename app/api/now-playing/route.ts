@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 
 const PLACEHOLDER = "2a96cbd8b46e442fc41c2b86b821562f"; // Last.fm's "no artwork" image
+const CACHE_CONTROL = "public, s-maxage=10, stale-while-revalidate=10";
 
 type Result = {
   name: string;
@@ -18,6 +19,7 @@ type Result = {
   paused: boolean;
   durationMs: number;
   elapsedMs: number | null; // only set when it is the real position
+  positionAt: number | null;
 };
 
 // ---------- Spotify ----------
@@ -72,10 +74,14 @@ async function fromSpotify(): Promise<Result | null> {
 
   if (!token) return null;
 
+  const sent = Date.now();
+
   const res = await fetch(
     "https://api.spotify.com/v1/me/player/currently-playing?additional_types=track,episode",
     { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" },
   );
+
+  const received = Date.now();
 
   if (res.status === 204 || !res.ok) return null; // 204 = nothing playing
 
@@ -94,6 +100,7 @@ async function fromSpotify(): Promise<Result | null> {
     paused: !d.is_playing,
     durationMs: item.duration_ms ?? 0,
     elapsedMs: Number.isFinite(d.progress_ms) ? d.progress_ms : null,
+    positionAt: Math.round((sent + received) / 2),
   };
 }
 
@@ -142,6 +149,7 @@ async function fromLastfm(): Promise<Result | null> {
     paused: false,
     durationMs: 0,
     elapsedMs: null,
+    positionAt: null,
   };
 }
 
@@ -152,7 +160,7 @@ export async function GET() {
   if (!hasSpotify && !hasLastfm) {
     return NextResponse.json(
       { error: "Set the Spotify or Last.fm variables in .env.local" },
-      { status: 500 },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
     );
   }
 
@@ -160,8 +168,11 @@ export async function GET() {
     const spotify = await fromSpotify().catch(() => null);
     const track = spotify ?? (await fromLastfm().catch(() => null));
 
-    return NextResponse.json({ track });
+    return NextResponse.json({ track }, { headers: { "Cache-Control": CACHE_CONTROL } });
   } catch {
-    return NextResponse.json({ track: null }, { status: 502 });
+    return NextResponse.json(
+      { track: null },
+      { status: 502, headers: { "Cache-Control": "no-store" } },
+    );
   }
 }
