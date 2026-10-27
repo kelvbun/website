@@ -11,7 +11,6 @@ import NowPlaying from "./NowPlaying";
 import PandaCover from "./PandaCover";
 import Clock from "./Clock";
 import DrawingBoard from "./DrawingBoard";
-import RaccoonHead from "./RaccoonHead";
 import ThemeToggle from "./ThemeToggle";
 
 type Tile = {
