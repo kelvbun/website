@@ -5,7 +5,7 @@
 // strokes are sent to /api/board in small batches, and everyone's strokes are
 // pulled back every few seconds.
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { BOARD_H as H, BOARD_W as W, MAX_COLOR } from "@/lib/board-config";
 import { drainBoardQueue } from "@/lib/board-outbox.js";
 
@@ -34,6 +34,8 @@ export default function DrawingBoard() {
   const flushRef = useRef<() => Promise<void>>(async () => {});
   const drawing = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
+  const keyboardCursor = useRef({ x: Math.floor(W / 2), y: Math.floor(H / 2) });
+  const keyboardActive = useRef(false);
   const colorRef = useRef(5);
 
   const [color, setColor] = useState(5);
@@ -54,6 +56,16 @@ export default function DrawingBoard() {
       any = true;
       ctx.fillStyle = COLORS[c - 1];
       ctx.fillRect(i % W, Math.floor(i / W), 1, 1);
+    }
+
+    if (keyboardActive.current) {
+      const { x, y } = keyboardCursor.current;
+      ctx.lineWidth = 0.2;
+      ctx.strokeStyle = "#fff";
+      ctx.strokeRect(x + 0.04, y + 0.04, 0.92, 0.92);
+      ctx.lineWidth = 0.08;
+      ctx.strokeStyle = "#111";
+      ctx.strokeRect(x + 0.16, y + 0.16, 0.68, 0.68);
     }
 
     setEmpty(!any);
@@ -246,11 +258,40 @@ export default function DrawingBoard() {
   }
 
   function onPointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
+    keyboardActive.current = false;
+    redraw();
     event.currentTarget.setPointerCapture(event.pointerId);
     drawing.current = true;
     const cell = cellAt(event);
     plot(cell.x, cell.y);
     last.current = cell;
+  }
+
+  function onKeyDown(event: ReactKeyboardEvent<HTMLCanvasElement>) {
+    const cursor = keyboardCursor.current;
+
+    if (event.key.startsWith("Arrow")) {
+      event.preventDefault();
+
+      if (event.key === "ArrowLeft") cursor.x = Math.max(0, cursor.x - 1);
+
+      if (event.key === "ArrowRight") cursor.x = Math.min(W - 1, cursor.x + 1);
+
+      if (event.key === "ArrowUp") cursor.y = Math.max(0, cursor.y - 1);
+
+      if (event.key === "ArrowDown") cursor.y = Math.min(H - 1, cursor.y + 1);
+
+      keyboardActive.current = true;
+      redraw();
+
+      return;
+    }
+
+    if (event.key === " " || event.key === "Enter") {
+      event.preventDefault();
+      plot(cursor.x, cursor.y);
+      redraw();
+    }
   }
 
   function onPointerMove(event: ReactPointerEvent<HTMLCanvasElement>) {
@@ -277,13 +318,24 @@ export default function DrawingBoard() {
         ref={canvasRef}
         width={W}
         height={H}
+        tabIndex={0}
         role="img"
-        aria-label="Shared drawing board. Everyone who visits draws on the same canvas."
+        aria-label="Shared drawing board. Use arrow keys to move, then Space or Enter to draw with the selected color."
+        aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Space Enter"
+        onFocus={() => {
+          keyboardActive.current = true;
+          redraw();
+        }}
+        onBlur={() => {
+          keyboardActive.current = false;
+          redraw();
+        }}
+        onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endStroke}
         onPointerCancel={endStroke}
-        className="absolute inset-0 h-full w-full cursor-crosshair touch-none [image-rendering:pixelated]"
+        className="absolute inset-0 h-full w-full cursor-crosshair touch-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current [image-rendering:pixelated]"
       />
 
       {/* empty-board hint */}
