@@ -8,7 +8,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import NowPlaying from "./NowPlaying";
-import PandaHead from "./PandaHead";
+import PandaCover from "./PandaCover";
+import Clock from "./Clock";
+import DrawingBoard from "./DrawingBoard";
+import RaccoonHead from "./RaccoonHead";
 import ThemeToggle from "./ThemeToggle";
 
 type Tile = {
@@ -35,11 +38,10 @@ const tiles: Tile[] = [
     ),
   },
   {
-    id: "panda",
+    id: "blob",
     place: "desk:col-start-3 desk:row-start-1",
-    tone: "bare",
-    flush: true,
-    body: <PandaHead />,
+    tone: "line",
+    body: <p className="text-sm font-medium">Blob</p>,
   },
   {
     id: "github",
@@ -58,10 +60,10 @@ const tiles: Tile[] = [
 
   // ROW 2-3
   {
-    id: "location",
+    id: "clock",
     place: "desk:col-start-1 desk:row-start-2",
     tone: "stone",
-    body: <p className="text-sm">City, Country</p>,
+    body: <Clock timeZone="America/New_York" label="New York" />,
   },
   {
     id: "about",
@@ -113,17 +115,10 @@ const tiles: Tile[] = [
   },
   {
     id: "email",
-    place: "desk:col-start-3 desk:row-start-4",
+    place: "desk:col-start-3 desk:col-span-2 desk:row-start-4",
     href: "mailto:you@example.com",
     tone: "ink",
     body: <p className="text-sm font-medium">Email</p>,
-  },
-  {
-    id: "blog",
-    place: "desk:col-start-4 desk:row-start-4",
-    href: "/blog",
-    tone: "line",
-    body: <p className="text-sm font-medium">Writing</p>,
   },
   {
     id: "project-2",
@@ -139,10 +134,15 @@ const tiles: Tile[] = [
     place: "col-span-2 row-span-2 desk:col-start-1 desk:col-span-2 desk:row-start-5 desk:row-span-2",
     href: "/projects/three",
     tone: "paper",
+    flush: true,
     body: (
-      <div className="flex h-full flex-col justify-end">
-        <h3 className="text-xl font-semibold">Project three</h3>
-        <p className="text-sm opacity-70">Short description.</p>
+      <div className="relative h-full w-full">
+        <PandaCover />
+        {/* readable caption over the scene */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent p-4 pt-12 text-white">
+          <h3 className="text-xl font-semibold">Project three</h3>
+          <p className="text-sm opacity-80">Short description.</p>
+        </div>
       </div>
     ),
   },
@@ -155,7 +155,6 @@ const tiles: Tile[] = [
   {
     id: "contact",
     place: "row-span-2 desk:col-start-4 desk:row-start-5 desk:row-span-2",
-    href: "/contact",
     tone: "ink",
     body: (
       <div className="flex h-full items-center justify-center">
@@ -179,11 +178,11 @@ const tiles: Tile[] = [
     body: <p className="text-sm">Now</p>,
   },
   {
-    id: "project-5",
+    id: "board",
     place: "col-span-2 desk:col-start-5 desk:col-span-2 desk:row-start-6",
-    href: "/projects/five",
     tone: "paper",
-    body: <p className="text-sm font-medium">Project five</p>,
+    flush: true,
+    body: <DrawingBoard />,
   },
 ];
 
@@ -194,6 +193,21 @@ const tones: Record<Tile["tone"], string> = {
   line: "border border-neutral-300 bg-transparent text-neutral-900 dark:border-neutral-700 dark:text-neutral-100",
   bare: "bg-transparent text-neutral-900 dark:text-neutral-100", // no box: the content is the shape
 };
+
+// Every tile eases its movement and shadow with a soft "settle" curve.
+const base =
+  "relative rounded-lg transition-[translate,scale,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none";
+
+// Clickable tiles lift, grow slightly and gain a shadow on hover or keyboard
+// focus, then press down when clicked. Reduced-motion users get no movement.
+const linkFx = [
+  "group hover:z-10",
+  "hover:-translate-y-1 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/50",
+  "focus-visible:z-10 focus-visible:-translate-y-1 focus-visible:scale-[1.02] focus-visible:shadow-xl",
+  "active:translate-y-0 active:scale-[0.98] active:duration-100",
+  "motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100",
+  "motion-reduce:focus-visible:translate-y-0 motion-reduce:focus-visible:scale-100",
+].join(" ");
 
 export default function BentoGrid() {
   return (
@@ -208,12 +222,26 @@ export default function BentoGrid() {
         "
       >
         {tiles.map((t) => {
-          const cls = `${t.place} ${tones[t.tone]} ${t.tone === "bare" ? "overflow-visible" : "overflow-hidden"} rounded-lg ${t.flush ? "p-0" : "p-4"} transition-transform motion-reduce:transition-none
-            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
-            ${t.href ? "hover:-translate-y-0.5" : ""}`;
+          const cls = [
+            t.place,
+            base,
+            tones[t.tone],
+            t.tone === "bare" ? "overflow-visible" : "overflow-hidden",
+            t.flush ? "p-0" : "p-4",
+            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+            t.href ? linkFx : "",
+          ].join(" ");
+
           return t.href ? (
             <Link key={t.id} href={t.href} className={cls}>
               {t.body}
+              {/* corner arrow that slides in on hover */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute right-3 top-3 -translate-x-1 translate-y-1 text-sm opacity-0 transition-[opacity,translate] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 motion-reduce:transition-none"
+              >
+                ↗
+              </span>
             </Link>
           ) : (
             <div key={t.id} className={cls}>

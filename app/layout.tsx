@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Your Name",
-  description: "Frontend developer portfolio",
+  title: "Kelvin's Website",
+  description: "Welcome to my website!",
 };
 
 export const viewport: Viewport = {
