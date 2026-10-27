@@ -34,3 +34,10 @@ Before the final response, run one reporting pass. If candidates remain, from th
 - Always format project changes with Oxfmt. Run `pnpm fmt` after editing files.
 - Always lint JavaScript and TypeScript changes with Oxlint. Run `pnpm lint` before finishing.
 - Do not use Prettier or ESLint in this project.
+
+## Commit messages
+
+- Use Conventional Commits: `<type>(optional-scope): <imperative summary>`.
+- Use lowercase types such as `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, or `chore`.
+- Keep the subject concise and omit the trailing period.
+- Add a body when useful; mark breaking changes with `!` and describe their impact.
