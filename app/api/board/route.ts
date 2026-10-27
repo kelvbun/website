@@ -19,10 +19,15 @@ const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TO
 
 // automaticDeserialization off: a board that is all digits must stay a string.
 const redis = url && token ? new Redis({ url, token, automaticDeserialization: false }) : null;
+const productionWithoutRedis = !redis && process.env.NODE_ENV === "production";
 
 const memory: string[] = Array(SIZE).fill("0"); // dev-only fallback
 
 export async function GET() {
+  if (productionWithoutRedis) {
+    return NextResponse.json({ error: "Board storage is not configured" }, { status: 503 });
+  }
+
   try {
     let data = "";
 
@@ -48,6 +53,10 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (productionWithoutRedis) {
+    return NextResponse.json({ error: "Board storage is not configured" }, { status: 503 });
+  }
+
   let body: unknown;
 
   try {
