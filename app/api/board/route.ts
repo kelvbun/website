@@ -18,19 +18,17 @@ const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
 const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
 
 // automaticDeserialization off: a board that is all digits must stay a string.
-const redis =
-  url && token
-    ? new Redis({ url, token, automaticDeserialization: false })
-    : null;
+const redis = url && token ? new Redis({ url, token, automaticDeserialization: false }) : null;
 
 const memory: string[] = Array(SIZE).fill("0"); // dev-only fallback
 
 export async function GET() {
   try {
     let data = "";
+
     if (redis) {
       const raw = await redis.get<string>(KEY);
-      data = typeof raw === "string" ? raw : "";
+      data = raw ?? "";
     } else {
       data = memory.join("");
     }
@@ -51,6 +49,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   let body: unknown;
+
   try {
     body = await req.json();
   } catch {
@@ -58,22 +57,21 @@ export async function POST(req: Request) {
   }
 
   // px is a flat list: [index, colour, index, colour, ...]
-  const px = (body as { px?: unknown } | null)?.px;
-  if (
-    !Array.isArray(px) ||
-    px.length % 2 !== 0 ||
-    px.length > MAX_PIXELS_PER_REQUEST * 2
-  ) {
+  const px: unknown = Object(body).px;
+
+  if (!Array.isArray(px) || px.length % 2 !== 0 || px.length > MAX_PIXELS_PER_REQUEST * 2) {
     return NextResponse.json({ error: "Bad pixels" }, { status: 400 });
   }
 
   const pairs: [number, number][] = [];
+
   for (let i = 0; i < px.length; i += 2) {
-    const idx = px[i] as number;
-    const color = px[i + 1] as number;
+    const idx = px[i];
+    const color = px[i + 1];
+
     if (
-      !Number.isInteger(idx) ||
-      !Number.isInteger(color) ||
+      !isInteger(idx) ||
+      !isInteger(color) ||
       idx < 0 ||
       idx >= SIZE ||
       color < 0 ||
@@ -81,8 +79,10 @@ export async function POST(req: Request) {
     ) {
       return NextResponse.json({ error: "Bad pixel" }, { status: 400 });
     }
+
     pairs.push([idx, color]);
   }
+
   if (pairs.length === 0) return NextResponse.json({ ok: true });
 
   try {
@@ -91,19 +91,27 @@ export async function POST(req: Request) {
       const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
       const limitKey = `board:rl:${ip}`;
       const count = await redis.incr(limitKey);
+
       if (count === 1) await redis.expire(limitKey, 10);
+
       if (count > MAX_REQUESTS_PER_10S) {
         return NextResponse.json({ error: "Slow down" }, { status: 429 });
       }
 
       const pipe = redis.pipeline();
+
       for (const [idx, color] of pairs) pipe.setrange(KEY, idx, color.toString(36));
       await pipe.exec();
     } else {
       for (const [idx, color] of pairs) memory[idx] = color.toString(36);
     }
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Board unavailable" }, { status: 502 });
   }
+}
+
+function isInteger(value: unknown): value is number {
+  return Number.isInteger(value);
 }

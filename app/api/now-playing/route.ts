@@ -30,6 +30,7 @@ async function spotifyToken(): Promise<string | null> {
   const id = process.env.SPOTIFY_CLIENT_ID;
   const secret = process.env.SPOTIFY_CLIENT_SECRET;
   const refresh = process.env.SPOTIFY_REFRESH_TOKEN;
+
   if (!id || !secret || !refresh) return null;
 
   const res = await fetch("https://accounts.spotify.com/api/token", {
@@ -44,6 +45,7 @@ async function spotifyToken(): Promise<string | null> {
     }),
     cache: "no-store",
   });
+
   if (!res.ok) return null;
 
   const data = await res.json();
@@ -51,6 +53,7 @@ async function spotifyToken(): Promise<string | null> {
     token: data.access_token,
     expires: Date.now() + data.expires_in * 1000,
   };
+
   return cached.token;
 }
 
@@ -66,31 +69,31 @@ type SpotifyItem = {
 
 async function fromSpotify(): Promise<Result | null> {
   const token = await spotifyToken();
+
   if (!token) return null;
 
   const res = await fetch(
     "https://api.spotify.com/v1/me/player/currently-playing?additional_types=track,episode",
     { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" },
   );
+
   if (res.status === 204 || !res.ok) return null; // 204 = nothing playing
 
   const d = await res.json();
   const item: SpotifyItem | null = d?.item ?? null;
+
   if (!item) return null;
 
   return {
     name: item.name,
-    artist:
-      item.artists?.map((a) => a.name).join(", ") ??
-      item.show?.publisher ??
-      "",
+    artist: item.artists?.map((a) => a.name).join(", ") ?? item.show?.publisher ?? "",
     album: item.album?.name ?? item.show?.name ?? "",
     url: item.external_urls?.spotify ?? "",
     image: (item.album?.images ?? item.images)?.[0]?.url ?? null,
     nowPlaying: true,
     paused: !d.is_playing,
     durationMs: item.duration_ms ?? 0,
-    elapsedMs: typeof d.progress_ms === "number" ? d.progress_ms : null,
+    elapsedMs: Number.isFinite(d.progress_ms) ? d.progress_ms : null,
   };
 }
 
@@ -101,6 +104,7 @@ type LastfmImage = { size: string; "#text": string };
 async function fromLastfm(): Promise<Result | null> {
   const key = process.env.LASTFM_API_KEY;
   const user = process.env.LASTFM_USERNAME;
+
   if (!key || !user) return null;
 
   const qs = new URLSearchParams({
@@ -110,21 +114,23 @@ async function fromLastfm(): Promise<Result | null> {
     format: "json",
     limit: "1",
   });
+
   const res = await fetch(`https://ws.audioscrobbler.com/2.0/?${qs}`, {
     cache: "no-store",
   });
+
   if (!res.ok) return null;
 
   const data = await res.json();
   const list = data?.recenttracks?.track;
   const t = Array.isArray(list) ? list[0] : list;
+
   if (!t) return null;
 
   const images: LastfmImage[] = t.image ?? [];
+
   const art =
-    images.find((i) => i.size === "extralarge")?.["#text"] ||
-    images.at(-1)?.["#text"] ||
-    "";
+    images.find((i) => i.size === "extralarge")?.["#text"] || images.at(-1)?.["#text"] || "";
 
   return {
     name: t.name,
@@ -153,6 +159,7 @@ export async function GET() {
   try {
     const spotify = await fromSpotify().catch(() => null);
     const track = spotify ?? (await fromLastfm().catch(() => null));
+
     return NextResponse.json({ track });
   } catch {
     return NextResponse.json({ track: null }, { status: 502 });

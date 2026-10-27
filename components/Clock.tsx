@@ -7,8 +7,10 @@ import { useSyncExternalStore } from "react";
 
 function subscribe(onChange: () => void) {
   const id = setInterval(onChange, 1000);
+
   return () => clearInterval(id);
 }
+
 const getNow = () => Math.floor(Date.now() / 1000) * 1000;
 
 type Props = {
@@ -16,16 +18,14 @@ type Props = {
   label?: string;
 };
 
-export default function Clock({
-  timeZone = "America/New_York",
-  label = "New York",
-}: Props) {
+export default function Clock({ timeZone = "America/New_York", label = "New York" }: Props) {
   // 0 on the server and during hydration, so server and client markup match
   const now = useSyncExternalStore(subscribe, getNow, () => 0);
 
   if (!now) return <div className="h-full" aria-hidden="true" />;
 
   const date = new Date(now);
+
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     hour: "numeric",
@@ -43,6 +43,7 @@ export default function Clock({
   const h24 = Number(
     new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", hourCycle: "h23" }).format(date),
   );
+
   const isDay = h24 >= 6 && h24 < 18;
 
   return (
@@ -88,9 +89,7 @@ export default function Clock({
       </p>
 
       {/* bottom-right: zone */}
-      <span className="absolute bottom-0 right-0 text-[9cqw] font-medium opacity-60">
-        {zone}
-      </span>
+      <span className="absolute bottom-0 right-0 text-[9cqw] font-medium opacity-60">{zone}</span>
     </div>
   );
 }

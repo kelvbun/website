@@ -11,6 +11,7 @@ function subscribe(onChange: () => void) {
     attributes: true,
     attributeFilter: ["class"],
   });
+
   return () => observer.disconnect();
 }
 
@@ -22,6 +23,7 @@ export default function ThemeToggle() {
   function toggle() {
     const next = !isDark();
     document.documentElement.classList.toggle("dark", next);
+
     try {
       localStorage.setItem("theme", next ? "dark" : "light");
     } catch {

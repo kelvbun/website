@@ -2,11 +2,15 @@
   "name": "website",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
   },
   "dependencies": {
     "@upstash/redis": "^1.40.0",
@@ -16,13 +20,14 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "@oxlint/plugins": "1.89.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.186.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.4.3",
+    "oxfmt": "^0.74.0",
+    "oxlint": "1.89.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

@@ -17,6 +17,7 @@ type Track = {
 
 const fmt = (ms: number) => {
   const total = Math.max(0, Math.floor(ms / 1000));
+
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 };
 
@@ -35,10 +36,13 @@ export default function NowPlaying() {
     async function load() {
       try {
         const sent = Date.now();
+
         const res = await fetch(`/api/now-playing?t=${sent}`, {
           cache: "no-store",
         });
+
         const data = await res.json();
+
         if (!active) return;
 
         // The position was measured mid-request, so anchor to the midpoint.
@@ -61,6 +65,7 @@ export default function NowPlaying() {
     const onVisible = () => {
       if (document.visibilityState === "visible") load();
     };
+
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", load);
 
@@ -90,11 +95,13 @@ export default function NowPlaying() {
     const id = setInterval(() => {
       const t = Date.now();
       setNow(t);
+
       if (base + (t - receivedAt) >= duration && t - lastEndFetch.current > 3000) {
         lastEndFetch.current = t;
         loadRef.current();
       }
     }, 1000);
+
     return () => clearInterval(id);
   }, [ticking, track, receivedAt]);
 
@@ -112,18 +119,16 @@ export default function NowPlaying() {
 
   const showProgress = track.durationMs > 0 && track.elapsedMs !== null;
   const live = track.nowPlaying && !track.paused;
+
   const elapsed = showProgress
     ? Math.min(
         Math.max((track.elapsedMs ?? 0) + (live ? now - receivedAt : 0), 0),
         track.durationMs,
       )
     : 0;
+
   const pct = showProgress ? (elapsed / track.durationMs) * 100 : 0;
-  const label = track.paused
-    ? "Paused"
-    : track.nowPlaying
-      ? "Now playing"
-      : "Last played";
+  const label = track.paused ? "Paused" : track.nowPlaying ? "Now playing" : "Last played";
 
   return (
     <a
@@ -133,7 +138,7 @@ export default function NowPlaying() {
       className="group relative block h-full w-full"
     >
       {track.image && (
-        // eslint-disable-next-line @next/next/no-img-element
+        // oxlint-disable-next-line nextjs/no-img-element
         <img
           src={track.image}
           alt={`Cover of ${track.album || track.name}`}
@@ -142,9 +147,7 @@ export default function NowPlaying() {
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
       <div className="relative flex h-full flex-col justify-between p-4 text-white">
-        <p className="w-fit rounded-full bg-black/60 px-3 py-1 text-sm backdrop-blur-md">
-          {label}
-        </p>
+        <p className="w-fit rounded-full bg-black/60 px-3 py-1 text-sm backdrop-blur-md">{label}</p>
         <div>
           <p className="line-clamp-2 text-lg font-semibold leading-tight desk:text-xl">
             {track.name}
