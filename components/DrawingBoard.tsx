@@ -23,8 +23,12 @@ const COLORS = [
 export default function DrawingBoard() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pixels = useRef(new Uint8Array(W * H));
-  const pending = useRef(new Map<number, number>()); // not sent yet
+  const pending = useRef(new Map<number, number>()); // not yet acknowledged by the server
   const recent = useRef(new Map<number, { c: number; until: number }>()); // sent, may not be in cached reads yet
+  const sending = useRef(false);
+  const saveFailed = useRef(false);
+  const retryAt = useRef(0);
+  const retryDelay = useRef(500);
   const drawing = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
   const colorRef = useRef(5);
@@ -81,7 +85,7 @@ export default function DrawingBoard() {
 
       pixels.current = next;
       redraw();
-      setStatus("live");
+      setStatus(saveFailed.current ? "offline" : "live");
     } catch {
       setStatus("offline");
     }
@@ -89,23 +93,39 @@ export default function DrawingBoard() {
 
   // send my strokes
   const flush = useCallback(async () => {
-    if (pending.current.size === 0) return;
-    const batch = [...pending.current].slice(0, 600);
-    const until = Date.now() + 8000;
+    if (sending.current || Date.now() < retryAt.current || pending.current.size === 0) return;
 
-    for (const [idx, c] of batch) {
-      pending.current.delete(idx);
-      recent.current.set(idx, { c, until });
-    }
+    const batch = [...pending.current].slice(0, 600);
+    sending.current = true;
 
     try {
-      await fetch("/api/board", {
+      const res = await fetch("/api/board", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ px: batch.flat() }),
       });
+
+      if (!res.ok) throw new Error("Could not save strokes");
+
+      const until = Date.now() + 8000;
+
+      for (const [idx, c] of batch) {
+        // Keep a newer local edit if the same pixel changed while this batch was in flight.
+        if (pending.current.get(idx) === c) pending.current.delete(idx);
+        recent.current.set(idx, { c, until });
+      }
+
+      retryAt.current = 0;
+      retryDelay.current = 500;
+      saveFailed.current = false;
+      setStatus("live");
     } catch {
-      // the next sync shows what actually got saved
+      retryAt.current = Date.now() + retryDelay.current;
+      retryDelay.current = Math.min(retryDelay.current * 2, 8000);
+      saveFailed.current = true;
+      setStatus("offline");
+    } finally {
+      sending.current = false;
     }
   }, []);
 
