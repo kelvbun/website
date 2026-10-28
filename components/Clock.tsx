@@ -78,18 +78,19 @@ export default function Clock({ timeZone = "America/New_York", label = "New York
         )}
       </svg>
 
-      {/* bottom-left: the time */}
-      <p className="absolute bottom-0 left-0 flex items-baseline gap-[2cqw] leading-none tabular-nums">
-        <span className="text-[27cqw] font-semibold tracking-tight">
+      {/* bottom: the time on its own line, AM/PM and zone on the line below,
+          so a wide time like 12:45 can never run into them */}
+      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-[3cqw]">
+        <p className="text-[27cqw] font-semibold leading-none tracking-tight tabular-nums">
           {hour}
           <span className="motion-safe:animate-pulse">:</span>
           {minute}
-        </span>
-        <span className="text-[9cqw] font-medium opacity-60">{period}</span>
-      </p>
-
-      {/* bottom-right: zone */}
-      <span className="absolute bottom-0 right-0 text-[9cqw] font-medium opacity-60">{zone}</span>
+        </p>
+        <p className="flex justify-between text-[9cqw] font-medium leading-none opacity-60">
+          <span>{period}</span>
+          <span>{zone}</span>
+        </p>
+      </div>
     </div>
   );
 }
